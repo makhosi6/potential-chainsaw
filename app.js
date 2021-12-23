@@ -6,15 +6,12 @@ const _error = express.Router();
 /**
  * 
  */
-const {
-    minimal_args
-} = require("./helpers/browser")
-const {
-    task,
-    log
-} = require("./jobs/search");
+const {minimal_args} = require("./helpers/browser")
+const {task, didCrush} = require("./jobs/search");
 const PORT = process.env.PORT || 2020;
-
+/** 
+ * Middleware to filter illegal methods
+ */
 app.use(function (req, res, next) {
     console.log({
         METHOD: req.method
@@ -24,11 +21,17 @@ app.use(function (req, res, next) {
     } else {
         res.status(405).json({
             status: 405,
+            method: req.method,
             message: "Method Not Allowed",
-            path: req.originalUrl
+            path: req.originalUrl,
         })
     }
 
+})
+app.use(function (req, res, next) {
+    console.log(req.socket._peername)
+    console.log(res.socket._peername)
+    next()
 })
 
 /**
@@ -45,10 +48,15 @@ Promise.resolve(launchTheBrowser()).then(function (browser) {
     _search.get("/:search", async function (req, res) {
         let search = req.query.search || req.params.search
         let url = req.protocol + '://' + req.get('host') + req.originalUrl;
+        console.log(req.socket._peername)
+        console.log(res.socket._peername)
         console.log("\x1b[43m%s\x1b[0m", url)
-        task(browser, search).then(data => {
-            // if (JSON.stringify({}) === JSON.stringify(data)) {
-            if (log.length === 0) {
+      
+        task(browser, search)
+        .then(data => {
+            //// if (JSON.stringify({}) === JSON.stringify(data)) {
+            //// if (log.length === 0) {
+            if (didCrush) {
                 res.send({
                     status: 500,
                     message: "Internal Server Error"
@@ -57,10 +65,10 @@ Promise.resolve(launchTheBrowser()).then(function (browser) {
                 res.send({
                     status: 200,
                     path: req.originalUrl,
-                    "total": log.length,
+                    // "total": log.length,
                     current_page: 1,
                     next_page: null,
-                    data
+                    ...data
                 });
             }
         })
@@ -74,6 +82,6 @@ Promise.resolve(launchTheBrowser()).then(function (browser) {
     });
 
     app.use('/api/v1/', [_search, _error]);
-    app.listen(PORT, () => console.log("\x1b[42m%s\x1b[0m", `listening on http://localhost:${PORT}`));
+    app.listen(PORT, () => console.log("\x1b[42m%s\x1b[0m", `\n listening on http://localhost:${PORT} \n`));
 
 })

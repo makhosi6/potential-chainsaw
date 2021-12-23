@@ -3,7 +3,7 @@
  * Keep track of properties of the data object 
  * AND Monitor and keep track of error(s), So we can exit the loops
  */
- let log = []
+ let didCrush = false;
 
 /**
  * 'var' statement declares a function-scoped or globally-scoped variable, so you will see 'var' in a number of place. DO PANIC!!
@@ -12,6 +12,11 @@
  * @returns {object} data
  */
 const task = async (browser, search) => {
+  /**
+   * Keep track of properties of the data object 
+   * AND Monitor and keep track of error(s), So we can exit the loops
+   */
+  var log = []
   let data = {}
   try {
 
@@ -25,8 +30,8 @@ const task = async (browser, search) => {
         req.continue();
       }
     });
-    // await page.goto(`https://en.wiktionary.org/wiki/${search}`
-    await page.goto(`https://en.wiktionary.org/w/index.php?title=${search}`
+    await page.goto(`https://en.wiktionary.org/wiki/${search}`
+    // await page.goto(`https://en.wiktionary.org/w/index.php?title=${search}`
       /** , { waitUntil: "networkidle2", }*/
     );
     await page.waitForSelector(".mw-headline");
@@ -56,14 +61,14 @@ const task = async (browser, search) => {
     }
 
     for (let index = 0; index < heads.length; index++) {
-      console.log(index);
       try {
         let element = heads[index];
         let nameEl = await page.evaluateHandle((el) => el.firstChild, element);
         let id = await page.evaluate((el) => el.id, nameEl);
         let name = await id.toLowerCase();
         let headtext = await page.evaluate((text) => text.innerText, nameEl);
-
+        
+        console.log(name ,index);
         let sub = await page.evaluateHandle(
           (el) => el.nextElementSibling,
           element);
@@ -111,6 +116,7 @@ const task = async (browser, search) => {
     }
 
   } catch (error) {
+    didCrush = true;
     console.error({
       ERROR: error
     })
@@ -124,9 +130,9 @@ const task = async (browser, search) => {
       timeElapsed: (end - start) / 1000
     });
   }
-  return data;
+  return { "total": log.length,data};
   ////
 }
 module.exports = {
-  task, log
+  task, didCrush
 }
