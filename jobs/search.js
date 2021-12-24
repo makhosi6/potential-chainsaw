@@ -117,15 +117,17 @@ const task = async (browser, search) => {
 
   } catch (error) {
     didCrush = true;
-    console.error({
-      ERROR: error
-    })
+    throw new Error("Internal Server Error")
+    // console.error({
+    //   ERROR: error
+    // })
   } finally {
     page.close()
     var end = new Date()
     console.log({
       start,
       end,
+      didCrush,
       hasLoaded,
       timeElapsed: (end - start) / 1000
     });

@@ -7,7 +7,7 @@ const _error = express.Router();
  * 
  */
 const {minimal_args} = require("./helpers/browser")
-const {task, didCrush} = require("./jobs/search");
+const {task } = require("./jobs/search");
 const PORT = process.env.PORT || 2020;
 /** 
  * Middleware to filter illegal methods
@@ -28,40 +28,27 @@ app.use(function (req, res, next) {
     }
 
 })
-app.use(function (req, res, next) {
-    console.log(req.socket._peername)
-    console.log(res.socket._peername)
-    next()
-})
+
 
 /**
  * Launch the browser 
  * @tutorial {@link Puppeteer} https://pptr.dev/#?product=Puppeteer&version=v13.0.1&show=api-class-browser
  *
  */
-const launchTheBrowser = async () => await puppeteer.launch({
+const launch = async () => await puppeteer.launch({
     headless: false,
     args: minimal_args,
     userDataDir: './data/user_dir'
 })
-Promise.resolve(launchTheBrowser()).then(function (browser) {
+Promise.resolve(launch()).then(function (browser) {
     _search.get("/:search", async function (req, res) {
+     
         let search = req.query.search || req.params.search
         let url = req.protocol + '://' + req.get('host') + req.originalUrl;
-        console.log(req.socket._peername)
-        console.log(res.socket._peername)
         console.log("\x1b[43m%s\x1b[0m", url)
-      
+    
         task(browser, search)
         .then(data => {
-            //// if (JSON.stringify({}) === JSON.stringify(data)) {
-            //// if (log.length === 0) {
-            if (didCrush) {
-                res.send({
-                    status: 500,
-                    message: "Internal Server Error"
-                })
-            } else {
                 res.send({
                     status: 200,
                     path: req.originalUrl,
@@ -70,7 +57,16 @@ Promise.resolve(launchTheBrowser()).then(function (browser) {
                     next_page: null,
                     ...data
                 });
-            }
+        })
+        .catch(err => {
+            console.log({
+               Error: err
+            });
+            res.send({
+                status: 500,
+                message: "Internal Server Error"
+            })
+
         })
     });
     _error.get('*', function (req, res) {
@@ -80,8 +76,18 @@ Promise.resolve(launchTheBrowser()).then(function (browser) {
             path: req.originalUrl
         })
     });
-
+    app.use(function (req, res, next) {
+        const ip = req.headers['x-forwarded-for'] ||  req.socket.remoteAddress||req.connection.remoteAddress;
+        console.log({ip})
+        next()
+    
+    })
     app.use('/api/v1/', [_search, _error]);
     app.listen(PORT, () => console.log("\x1b[42m%s\x1b[0m", `\n listening on http://localhost:${PORT} \n`));
-
+    app.on('close', function () {
+        console.log("CLOSED");
+    })
+    app.on('error', function () {
+        console.log("ERRORED");
+    })
 })
