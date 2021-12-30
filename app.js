@@ -9,25 +9,6 @@ const _error = express.Router();
 const {minimal_args} = require("./helpers/browser")
 const {task } = require("./jobs/search");
 const PORT = process.env.PORT || 2020;
-/** 
- * Middleware to filter illegal methods
- */
-app.use(function (req, res, next) {
-    console.log({
-        METHOD: req.method
-    })
-    if (req.method === 'GET') {
-        next()
-    } else {
-        res.status(405).json({
-            status: 405,
-            method: req.method,
-            message: "Method Not Allowed",
-            path: req.originalUrl,
-        })
-    }
-
-})
 
 
 /**
@@ -42,7 +23,7 @@ const launch = async () => await puppeteer.launch({
 })
 Promise.resolve(launch()).then(function (browser) {
     _search.get("/:search", async function (req, res) {
-     
+    
         let search = req.query.search || req.params.search
         let url = req.protocol + '://' + req.get('host') + req.originalUrl;
         console.log("\x1b[43m%s\x1b[0m", url)
@@ -59,9 +40,7 @@ Promise.resolve(launch()).then(function (browser) {
                 });
         })
         .catch(err => {
-            console.log({
-               Error: err
-            });
+            console.log(err);
             res.send({
                 status: 500,
                 message: "Internal Server Error"
@@ -77,17 +56,33 @@ Promise.resolve(launch()).then(function (browser) {
         })
     });
     app.use(function (req, res, next) {
-        const ip = req.headers['x-forwarded-for'] ||  req.socket.remoteAddress||req.connection.remoteAddress;
-        console.log({ip})
-        next()
+        console.log({
+            METHOD: req.method
+        })
+        if (req.method === 'GET') {
+            next()
+        } else {
+            res.status(405).json({
+                status: 405,
+                method: req.method,
+                message: "Method Not Allowed",
+                path: req.originalUrl,
+            })
+        }
     
     })
-    app.use('/api/v1/', [_search, _error]);
-    app.listen(PORT, () => console.log("\x1b[42m%s\x1b[0m", `\n listening on http://localhost:${PORT} \n`));
+    app.use(function (req, res, next) {
+        const IP = req.headers['x-forwarded-for'] || req.socket.remoteAddress|| req.connection.remoteAddress;
+        console.log({IP})
+        next()
+
+    })
     app.on('close', function () {
         console.log("CLOSED");
     })
     app.on('error', function () {
         console.log("ERRORED");
     })
+    app.use('/api/v1/', [_search, _error]);
+    app.listen(PORT, () => console.log("\x1b[42m%s\x1b[0m", `\n listening on http://localhost:${PORT} \n`));
 })
