@@ -174,8 +174,7 @@ const task = async (browser, search) => {
     });
   }
   return {
-    "total": log.length,
-
+    "total": log.length+1,
     data: {
       audio,
       ...data
