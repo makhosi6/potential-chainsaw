@@ -9,7 +9,8 @@ const _error = express.Router();
 const {minimal_args} = require("./helpers/browser")
 const {task } = require("./jobs/search");
 const PORT = process.env.PORT || 2020;
-
+const ENV = process.env.NODE_ENV || "unknown"
+console.log({ PORT, ENV });
 
 /**
  * Launch the browser 
@@ -84,5 +85,9 @@ Promise.resolve(launch()).then(function (browser) {
         console.log("ERRORED");
     })
     app.use('/api/v1/', [_search, _error]);
+    process.once('exit', async () => { 
+        console.log("PROCESS STOPPED")
+        await browser.close();
+    })
     app.listen(PORT, () => console.log("\x1b[42m%s\x1b[0m", `\n listening on http://localhost:${PORT} \n`));
 })
