@@ -16,7 +16,7 @@ const task = async (browser, search) => {
   /**
    * wiktionary URL/URI
    */
-  const URL = `https://en.wiktionary.org/wiki/${search}`;
+  const URL = `https://en.wiktionary.org/wiki/${search.trim()}`;
   /**
    * Keep track of properties of the data object
    * AND Monitor and keep track of error(s), So we can exit the loops
@@ -29,6 +29,7 @@ const task = async (browser, search) => {
     var page = await browser.newPage();
     await page.setRequestInterception(true);
     page.on("request", (req) => {
+      // console.table({url:req.url()});
       if (
         req.resourceType() == "stylesheet" ||
         req.resourceType() == "font" ||
@@ -40,6 +41,10 @@ const task = async (browser, search) => {
         req.continue();
       }
     });
+    page.on("response", (res) => {
+      console.table({fromCache: res.fromCache(),url:res.url()});
+    
+    })
     await page.goto(URL);
     /**await page.goto(`https://en.wiktionary.org/w/index.php?title=${search}`
 , { waitUntil: "networkidle2", }*/

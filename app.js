@@ -84,6 +84,7 @@ Promise.resolve(launch()).then(function (browser) {
     app.on('error', function () {
         console.log("ERRORED");
     })
+    // app.use('/api/v1/search', [_search, _error]);
     app.use('/api/v1/', [_search, _error]);
     process.once('exit', async () => { 
         console.log("PROCESS STOPPED")

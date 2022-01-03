@@ -6,6 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon --inspect --config nodemon.json app.js",
+    "audio": "nodemon --config nodemon.json helpers/audio_proxy/app.js",
     "start": "node app.js"
   },
   "keywords": [],
