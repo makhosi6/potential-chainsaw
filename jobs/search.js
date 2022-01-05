@@ -106,7 +106,7 @@ const task = async (browser, search) => {
             Array.from(links).map(async link => {
               let tag = await page.evaluate(async (el) => el.innerText, link)
               let a = excludeJunkChars(tag)
-              // a.trim() && href.push(a);
+              a.trim() && href.push(a);
             })
             let txt = await page.evaluate(async (el) => el.innerText, li);
             definitions.push(filterExamples(excludeJunkChars(txt)));
@@ -125,8 +125,8 @@ const task = async (browser, search) => {
           }, sub);
 
           anchorTags.map(link => {
-            // let a = excludeJunkChars(link)
-            // a.trim() && href.push(link)
+            let a = excludeJunkChars(link)
+            a.trim() && href.push(link)
           })
         }
         let exclude =
