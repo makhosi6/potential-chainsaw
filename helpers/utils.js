@@ -5,24 +5,7 @@
  */
 function excludeJunkChars(input) {
   let str = input;
-  let junk = [
-    1,
-    2,
-    3,
-    4,
-    5,
-    6,
-    7,
-    8,
-    9,
-    0,
-    "IPA(key):",
-    ".",
-    "quotations",
-    "▼",
-    "[",
-    "]",
-  ];
+  let junk = [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, "IPA(key):", ".", "quotations", "show ▼", "▼", "±", "[", "]"];
   let last = "";
   junk.map((j) => j !== last && (str = str.replace(j, "")));
   return str.replace(/(&nbsp;)*/g, "");

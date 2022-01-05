@@ -1,5 +1,9 @@
 //@ts-expect-error
-const { excludeJunkChars, filterExamples, isArray }  = require("../helpers/utils")
+const {
+  excludeJunkChars,
+  filterExamples,
+  isArray
+} = require("../helpers/utils")
 /**
  * Keep track of properties of the data object
  * AND Monitor and keep track of error(s), So we can exit the loops
@@ -23,6 +27,7 @@ const task = async (browser, search) => {
    */
   var log = [];
   var audio = [];
+  var href = [];
   let data = {};
   try {
     var start = new Date();
@@ -34,7 +39,7 @@ const task = async (browser, search) => {
         req.resourceType() == "stylesheet" ||
         req.resourceType() == "font" ||
         req.resourceType() ==
-          "image" /** || req.resourceType() == "script" || req.resourceType() == "javascript"*/
+        "image" /** || req.resourceType() == "script" || req.resourceType() == "javascript"*/
       ) {
         req.abort();
       } else {
@@ -42,8 +47,10 @@ const task = async (browser, search) => {
       }
     });
     page.on("response", (res) => {
-      console.table({fromCache: res.fromCache(),url:res.url()});
-    
+      // console.table({
+      //   fromCache: res.fromCache(),
+      // url: res.url()
+      // });
     })
     await page.goto(URL);
     /**await page.goto(`https://en.wiktionary.org/w/index.php?title=${search}`
@@ -73,6 +80,7 @@ const task = async (browser, search) => {
 
     for (let index = 0; index < heads.length; index++) {
       try {
+
         let element = heads[index];
         let nameEl = await page.evaluateHandle((el) => el.firstChild, element);
         let id = await page.evaluate((el) => el.id, nameEl);
@@ -87,28 +95,40 @@ const task = async (browser, search) => {
         // console.log({
         //   headtext
         // });
-        let sub = await page.evaluateHandle(
-          (el) => el.nextElementSibling,
-          element
-        );
-        let defs = await page.evaluateHandle(
-          (el) => el.nextElementSibling,
-          sub
-        );
-
+        let sub = await page.evaluateHandle((el) => el.nextElementSibling, element);
+        let defs = await page.evaluateHandle((el) => el.nextElementSibling, sub);
         let children = await defs.$$("ol > li");
-        let definations = [];
+        let definitions = [];
         let defsID = await page.evaluate((text) => text.tagName, defs);
         if (defsID === "OL") {
           for (const li of children) {
+            let links = await li.$$('a')
+            Array.from(links).map(async link => {
+              let tag = await page.evaluate(async (el) => el.innerText, link)
+              let a = excludeJunkChars(tag)
+              // a.trim() && href.push(a);
+            })
             let txt = await page.evaluate(async (el) => el.innerText, li);
-            definations.push(filterExamples(excludeJunkChars(txt)));
+            definitions.push(filterExamples(excludeJunkChars(txt)));
           }
         }
-        let subtext =
-          name === "pronunciation"
-            ? await page.evaluate((el) => el.innerText, await page.$(".IPA"))
-            : await page.evaluate((el) => el.innerText, sub);
+        let subtext = name === "pronunciation" ?
+          await page.evaluate((el) => el.innerText, await page.$(".IPA")) :
+          await page.evaluate((el) => el.innerText, sub);
+
+        if (name !== "pronunciation") {
+          let anchorTags = await page.evaluate((el) => {
+            let links = el.querySelectorAll('a')
+            console.log(links.length);
+            //
+            return [...Array.from(links).map(link => link.innerText)]
+          }, sub);
+
+          anchorTags.map(link => {
+            // let a = excludeJunkChars(link)
+            // a.trim() && href.push(link)
+          })
+        }
         let exclude =
           name.includes("further_reading") ||
           name.includes("see_also") ||
@@ -126,13 +146,15 @@ const task = async (browser, search) => {
             [name]: {
               headtext: excludeJunkChars(headtext),
               subtext: isArray(excludeJunkChars(subtext)),
-              definations,
+              definitions,
+
             },
           };
         }
       } catch (error) {
         console.log(error);
         // if (err === error.message && err !== undefined) break
+        // err = error.name;
         err = error.message;
       }
     }
@@ -152,10 +174,12 @@ const task = async (browser, search) => {
     });
   }
   return {
-    total: log.length + 1,
+    total: log.length + 2,
     data: {
       audio,
+      href,
       ...data,
+
     },
   };
   ////

@@ -15,6 +15,7 @@
         "jobs/search.js",
         "app.js",
         "helpers/audio_proxy/app.js"
+   
     ],
     "env": {
      

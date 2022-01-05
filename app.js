@@ -20,7 +20,7 @@ console.log({ PORT, ENV });
 const launch = async () => await puppeteer.launch({
     headless: false,
     args: minimal_args,
-    userDataDir: './data/user_dir'
+    // userDataDir: './data/user_dir'
 })
 Promise.resolve(launch()).then(function (browser) {
     _search.get("/:search", async function (req, res) {
