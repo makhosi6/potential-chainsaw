@@ -2,8 +2,8 @@
 const {
   excludeJunkChars,
   filterExamples,
-  isArray
-} = require("../helpers/utils")
+  isArray,
+} = require("../helpers/utils");
 /**
  * Keep track of properties of the data object
  * AND Monitor and keep track of error(s), So we can exit the loops
@@ -32,26 +32,27 @@ const task = async (browser, search) => {
   try {
     var start = new Date();
     var page = await browser.newPage();
-    await page.setRequestInterception(true);
-    page.on("request", (req) => {
-      // console.table({url:req.url()});
-      if (
-        req.resourceType() == "stylesheet" ||
-        req.resourceType() == "font" ||
-        req.resourceType() ==
-        "image" /** || req.resourceType() == "script" || req.resourceType() == "javascript"*/
-      ) {
-        req.abort();
-      } else {
-        req.continue();
-      }
-    });
+    await page.setViewport({ width: 1366, height: 768 });
+    // await page.setRequestInterception(true);
+    // page.on("request", (req) => {
+    //   // console.table({url:req.url()});
+    //   if (
+    //     req.resourceType() == "stylesheet" ||
+    //     req.resourceType() == "font" ||
+    //     req.resourceType() ==
+    //       "image" /** || req.resourceType() == "script" || req.resourceType() == "javascript"*/
+    //   ) {
+    //     req.abort();
+    //   } else {
+    //     req.continue();
+    //   }
+    // });
     page.on("response", (res) => {
       // console.table({
       //   fromCache: res.fromCache(),
       // url: res.url()
       // });
-    })
+    });
     await page.goto(URL);
     /**await page.goto(`https://en.wiktionary.org/w/index.php?title=${search}`
 , { waitUntil: "networkidle2", }*/
@@ -71,16 +72,18 @@ const task = async (browser, search) => {
      */
     let lastIndex;
     // await page.waitForSelector("audio");
-    const audio_en = await page.$("#mwe_player_0");
-    const src = await audio_en.$$("source");
-    Array.from(src).map(async (item) => {
-      let str = await page.evaluate((el) => el.dataset.src || el.src, item);
-      audio.push(str);
+    await page.evaluate(async () => {
+      // use window.md5 to compute hashes
+      const myString = 'PUPPETEER';
+ 
+      console.log(`${myString} USERAGENT  ${navigator.userAgent}`);
     });
+
+    var isAudio = await page.$(".mw-tmh-play")
+   if(isAudio) await page.evaluate((el) => el.click(), isAudio);
 
     for (let index = 0; index < heads.length; index++) {
       try {
-
         let element = heads[index];
         let nameEl = await page.evaluateHandle((el) => el.firstChild, element);
         let id = await page.evaluate((el) => el.id, nameEl);
@@ -95,39 +98,57 @@ const task = async (browser, search) => {
         // console.log({
         //   headtext
         // });
-        let sub = await page.evaluateHandle((el) => el.nextElementSibling, element);
-        let defs = await page.evaluateHandle((el) => el.nextElementSibling, sub);
+        let sub = await page.evaluateHandle(
+          (el) => el.nextElementSibling,
+          element
+        );
+        let defs = await page.evaluateHandle(
+          (el) => el.nextElementSibling,
+          sub
+        );
         let children = await defs.$$("ol > li");
         let definitions = [];
         let defsID = await page.evaluate((text) => text.tagName, defs);
         if (defsID === "OL") {
           for (const li of children) {
-            let links = await li.$$('a')
-            Array.from(links).map(async link => {
-              let tag = await page.evaluate(async (el) => el.innerText, link)
-              let a = excludeJunkChars(tag)
+            let links = await li.$$("a");
+            Array.from(links).map(async (link) => {
+              let tag = await page.evaluate(async (el) => el.innerText, link);
+              let a = excludeJunkChars(tag);
               a.trim() && href.push(a);
-            })
+            });
             let txt = await page.evaluate(async (el) => el.innerText, li);
             definitions.push(filterExamples(excludeJunkChars(txt)));
           }
         }
-        let subtext = name === "pronunciation" ?
-          await page.evaluate((el) => el.innerText, await page.$(".IPA")) :
-          await page.evaluate((el) => el.innerText, sub);
+        let subtext =
+          name === "pronunciation"
+            ? await page.evaluate((el) => el.innerText, await page.$(".IPA"))
+            : await page.evaluate((el) => el.innerText, sub);
 
         if (name !== "pronunciation") {
           let anchorTags = await page.evaluate((el) => {
-            let links = el.querySelectorAll('a')
+            let links = el.querySelectorAll("a");
             console.log(links.length);
             //
-            return [...Array.from(links).map(link => link.innerText)]
+            return [...Array.from(links).map((link) => link.innerText)];
           }, sub);
 
-          anchorTags.map(link => {
-            let a = excludeJunkChars(link)
-            a.trim() && href.push(link)
-          })
+          anchorTags.map((link) => {
+            let a = excludeJunkChars(link);
+            a.trim() && href.push(link);
+          });
+        }
+
+        if(isAudio){
+          const audio_en = await page.$("#mwe_player_0");
+  
+          const src = await audio_en.$$("source");
+          Array.from(src).map(async (item) => {
+            let str = await page.evaluate((el) => el.dataset.src || el.src, item);
+            audio.push(str);
+          });
+
         }
         let exclude =
           name.includes("further_reading") ||
@@ -147,7 +168,6 @@ const task = async (browser, search) => {
               headtext: excludeJunkChars(headtext),
               subtext: isArray(excludeJunkChars(subtext)),
               definitions,
-
             },
           };
         }
@@ -163,7 +183,7 @@ const task = async (browser, search) => {
     didCrush = true;
     throw new Error("Internal Server Error");
   } finally {
-    // page.close()
+    page.close()
     var end = new Date();
     console.log({
       start,
@@ -179,7 +199,6 @@ const task = async (browser, search) => {
       audio,
       href,
       ...data,
-
     },
   };
   ////

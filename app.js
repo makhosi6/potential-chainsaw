@@ -7,7 +7,7 @@ const _error = express.Router();
  * 
  */
 const {minimal_args} = require("./helpers/browser")
-const {task } = require("./jobs/search");
+const { task } = require("./jobs/search");
 const PORT = process.env.PORT || 2020;
 const ENV = process.env.NODE_ENV || "unknown"
 console.log({ PORT, ENV });
@@ -18,9 +18,9 @@ console.log({ PORT, ENV });
  *
  */
 const launch = async () => await puppeteer.launch({
-    headless: false,
-    args: minimal_args,
-    // userDataDir: './data/user_dir'
+    // headless: false,
+    // args: minimal_args,
+    userDataDir: './data/user_dir'
 })
 Promise.resolve(launch()).then(function (browser) {
     _search.get("/:search", async function (req, res) {

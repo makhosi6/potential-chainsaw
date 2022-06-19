@@ -5,7 +5,33 @@
  */
 function excludeJunkChars(input) {
   let str = input;
-  let junk = [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, "IPA(key):", ".", "quotations", "show ▼", "▼", "±", "[", "]"];
+  let junk = [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    0,
+    "IPA(key):",
+    ".",
+    "quotations",
+    "show ▼",
+    "▼",
+    "▲",
+    // "\a",
+    // "\b",
+    // "\r",
+    // // // "\n",
+    // "\s",
+    // "\t",
+    "±",
+    "[",
+    "]",
+  ];
   let last = "";
   junk.map((j) => j !== last && (str = str.replace(j, "")));
   return str.replace(/(&nbsp;)*/g, "");
@@ -15,7 +41,7 @@ function excludeJunkChars(input) {
  * @param {string} input
  * @returns {object}
  */
- function filterExamples(input) {
+function filterExamples(input) {
   try {
     // console.log(input.length, input);
     if (input.length > 0) {
@@ -37,9 +63,8 @@ function excludeJunkChars(input) {
  * @param {string} input
  * @returns {string|array}
  */
- function isArray(input) {
+function isArray(input) {
   return input.includes("\n") ? input.split("\n") : input;
 }
 
-
-module.exports = { excludeJunkChars, filterExamples, isArray }  
+module.exports = { excludeJunkChars, filterExamples, isArray };

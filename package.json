@@ -7,8 +7,9 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon --inspect --config nodemon.json app.js",
     "audio": "nodemon --config nodemon.json helpers/audio_proxy/app.js",
-    "start": "node app.js"
-  
+    "start": "node app.js",
+    "demon": "pm2 start app.js --force --no-color --time --max-memory-restart 4000M -i max --log dev-logs.log -- --expose-gc",
+    "runner": "pm2 start jobs/errands.js --force --no-color --time --max-memory-restart 1000M --log runner-logs.log -- --expose-gc"
   },
   "keywords": [],
   "author": "",
@@ -16,6 +17,7 @@
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.17.1",
+    "pm2": "^5.2.0",
     "puppeteer": "^11.0.0"
   },
   "devDependencies": {
