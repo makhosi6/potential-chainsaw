@@ -186,6 +186,7 @@ const task = async (browser, search) => {
     page.close()
     var end = new Date();
     console.log({
+      searchTerm:  search,
       start,
       end,
       didCrush,

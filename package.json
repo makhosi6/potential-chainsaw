@@ -8,7 +8,7 @@
     "dev": "nodemon --inspect --config nodemon.json app.js",
     "audio": "nodemon --config nodemon.json helpers/audio_proxy/app.js",
     "start": "node app.js",
-    "demon": "pm2 start app.js --force --no-color --time --max-memory-restart 4000M -i max --log dev-logs.log -- --expose-gc",
+    "demon": "pm2 start app.js --force --no-color --time --max-memory-restart 2000M --log dev-logs.log -- --expose-gc",
     "runner": "pm2 start jobs/errands.js --force --no-color --time --max-memory-restart 1000M --log runner-logs.log -- --expose-gc"
   },
   "keywords": [],
