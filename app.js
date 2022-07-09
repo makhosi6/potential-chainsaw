@@ -73,7 +73,7 @@ Promise.resolve(launch()).then(function (browser) {
     
     })
     app.use(function (req, res, next) {
-        const IP = req.headers['x-forwarded-for'] || req.socket.remoteAddress|| req.connection.remoteAddress;
+        const IP =   req.socket.remoteAddress|| req.connection.remoteAddress||req.headers['x-forwarded-for'];
         console.log({IP})
         next()
 

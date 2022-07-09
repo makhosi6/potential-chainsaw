@@ -71,4 +71,9 @@ function isArray(input) {
   return input.includes("\n") ? input.split("\n") : input;
 }
 
-module.exports = { excludeJunkChars, filterExamples, isArray };
+function delay(time) {
+  return new Promise(function(resolve) { 
+      setTimeout(resolve, time)
+  });
+}
+module.exports = { excludeJunkChars, filterExamples, isArray, delay };

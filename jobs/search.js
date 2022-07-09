@@ -3,6 +3,7 @@ const {
   excludeJunkChars,
   filterExamples,
   isArray,
+  delay,
 } = require("../helpers/utils");
 /**
  * Keep track of properties of the data object
@@ -83,16 +84,19 @@ const task = async (browser, search) => {
     // });
 
     var isAudio = await page.$(".mw-tmh-play");
-    if (isAudio) await page.evaluate((el) => el.click(), isAudio);
+    if (isAudio){ 
+      await page.evaluate((el) => el.click(), isAudio);
+      await delay()
+    };
 
     for (let index = 0; index < heads.length; index++) {
       try {
         let element = heads[index];
         let nameEl = await page.evaluateHandle((el) => el.firstChild, element);
         let id = await page.evaluate((el) => el.id, nameEl);
-        console.log({
-          id,
-        });
+        // console.log({
+        //   id,
+        // });
         let name;
         try {
           name = await id.toLowerCase();
@@ -110,7 +114,7 @@ const task = async (browser, search) => {
           (el) => el.nextElementSibling,
           element
         );
-        console.log(typeof sub);
+        // console.log(typeof sub);
         let defs = await page.evaluateHandle(
           (el) => el.nextElementSibling,
           sub
@@ -118,7 +122,7 @@ const task = async (browser, search) => {
         let children;
         try {
           children = await defs.$$("ol > li");
-          console.log(children.length);
+          // console.log(children.length);
         } catch (error) {
           children = [];
         }
@@ -190,8 +194,10 @@ const task = async (browser, search) => {
           } catch (error) {}
           var subText = isArray(excludeJunkChars(subtext));
 
-          if (subText !== "Nounedit" || headtext !== "") {
-            data = {
+          // console.log(subText+"|"+name+"|"+headtext );
+          if (!subText.includes("Nounedit") && name &&  headtext) {
+         
+        data = {
               ...data,
               [name]: {
                 headtext: excludeJunkChars(headtext),
