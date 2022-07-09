@@ -20,7 +20,7 @@ const task = async (browser, search) => {
   /**
    * wiktionary URL/URI
    */
-  const URL = `https://en.wiktionary.org/wiki/${search.trim()}`;
+  const URL = `https://en.wiktionary.org/wiki/${search.trim()}#English`;
   /**
    * Keep track of properties of the data object
    * AND Monitor and keep track of error(s), So we can exit the loops
@@ -32,7 +32,10 @@ const task = async (browser, search) => {
   try {
     var start = new Date();
     var page = await browser.newPage();
-    await page.setViewport({ width: 1366, height: 768 });
+    await page.setViewport({
+      width: 1366,
+      height: 768,
+    });
     // await page.setRequestInterception(true);
     // page.on("request", (req) => {
     //   // console.table({url:req.url()});
@@ -72,25 +75,30 @@ const task = async (browser, search) => {
      */
     let lastIndex;
     // await page.waitForSelector("audio");
-    await page.evaluate(async () => {
-      // use window.md5 to compute hashes
-      const myString = 'PUPPETEER';
- 
-      console.log(`${myString} USERAGENT  ${navigator.userAgent}`);
-    });
+    // await page.evaluate(async () => {
+    //   // use window.md5 to compute hashes
+    //   const myString = "PUPPETEER";
 
-    var isAudio = await page.$(".mw-tmh-play")
-   if(isAudio) await page.evaluate((el) => el.click(), isAudio);
+    //   console.log(`${myString} USERAGENT  ${navigator.userAgent}`);
+    // });
+
+    var isAudio = await page.$(".mw-tmh-play");
+    if (isAudio) await page.evaluate((el) => el.click(), isAudio);
 
     for (let index = 0; index < heads.length; index++) {
       try {
         let element = heads[index];
         let nameEl = await page.evaluateHandle((el) => el.firstChild, element);
         let id = await page.evaluate((el) => el.id, nameEl);
-        // console.log({
-        //   id
-        // });
-        let name = await id.toLowerCase();
+        console.log({
+          id,
+        });
+        let name;
+        try {
+          name = await id.toLowerCase();
+        } catch (error) {
+          name = "";
+        }
         // console.log({
         //   name
         // });
@@ -102,25 +110,35 @@ const task = async (browser, search) => {
           (el) => el.nextElementSibling,
           element
         );
+        console.log(typeof sub);
         let defs = await page.evaluateHandle(
           (el) => el.nextElementSibling,
           sub
         );
-        let children = await defs.$$("ol > li");
-        let definitions = [];
-        let defsID = await page.evaluate((text) => text.tagName, defs);
-        if (defsID === "OL") {
-          for (const li of children) {
-            let links = await li.$$("a");
-            Array.from(links).map(async (link) => {
-              let tag = await page.evaluate(async (el) => el.innerText, link);
-              let a = excludeJunkChars(tag);
-              a.trim() && href.push(a);
-            });
-            let txt = await page.evaluate(async (el) => el.innerText, li);
-            definitions.push(filterExamples(excludeJunkChars(txt)));
-          }
+        let children;
+        try {
+          children = await defs.$$("ol > li");
+          console.log(children.length);
+        } catch (error) {
+          children = [];
         }
+
+        let definitions = [];
+        try {
+          let defsID = await page.evaluate((text) => text.tagName, defs);
+          if (defsID === "OL") {
+            for (const li of children) {
+              let links = await li.$$("a");
+              Array.from(links).map(async (link) => {
+                let tag = await page.evaluate(async (el) => el.innerText, link);
+                let a = excludeJunkChars(tag);
+                a.trim() && href.push(a);
+              });
+              let txt = await page.evaluate(async (el) => el.innerText, li);
+              definitions.push(filterExamples(excludeJunkChars(txt)));
+            }
+          }
+        } catch (error) {}
         let subtext =
           name === "pronunciation"
             ? await page.evaluate((el) => el.innerText, await page.$(".IPA"))
@@ -140,36 +158,48 @@ const task = async (browser, search) => {
           });
         }
 
-        if(isAudio){
-          const audio_en = await page.$("#mwe_player_0");
-  
-          const src = await audio_en.$$("source");
-          Array.from(src).map(async (item) => {
-            let str = await page.evaluate((el) => el.dataset.src || el.src, item);
-            audio.push(str);
-          });
+        if (isAudio) {
+          try {
+            const audio_en = await page.$("#mwe_player_0");
 
+            const src = await audio_en.$$("source");
+            Array.from(src).map(async (item) => {
+              let str = await page.evaluate(
+                (el) => el.dataset.src || el.src,
+                item
+              );
+              audio.push(str);
+            });
+          } catch (err) {}
         }
         let exclude =
           name.includes("further_reading") ||
           name.includes("see_also") ||
+          name.includes("declension") ||
           name.includes("descendants") ||
           name.includes("anagrams") ||
-          name.includes("references");
-
+          name.includes("references") ||
+          name.includes("quotations") ||
+          name.includes("quotations") ||
+          name.includes("mutation");
         if ((lastIndex === log.indexOf(headtext)) === -1) break;
         lastIndex = log.indexOf(headtext) === -1 ? true : false;
         if (!exclude && log.indexOf(headtext) === -1) {
-          log.push(headtext.trim());
+          try {
+            log.push(headtext.trim());
+          } catch (error) {}
+          var subText = isArray(excludeJunkChars(subtext));
 
-          data = {
-            ...data,
-            [name]: {
-              headtext: excludeJunkChars(headtext),
-              subtext: isArray(excludeJunkChars(subtext)),
-              definitions,
-            },
-          };
+          if (subText !== "Nounedit" || headtext !== "") {
+            data = {
+              ...data,
+              [name]: {
+                headtext: excludeJunkChars(headtext),
+                subtext: subText,
+                definitions,
+              },
+            };
+          }
         }
       } catch (error) {
         console.log(error);
@@ -183,10 +213,10 @@ const task = async (browser, search) => {
     didCrush = true;
     throw new Error("Internal Server Error");
   } finally {
-    page.close()
+    page.close();
     var end = new Date();
     console.log({
-      searchTerm:  search,
+      searchTerm: search,
       start,
       end,
       didCrush,

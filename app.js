@@ -18,7 +18,7 @@ console.log({ PORT, ENV });
  *
  */
 const launch = async () => await puppeteer.launch({
-    // headless: false,
+    headless: false,
     // args: minimal_args,
     userDataDir: './data/user_dir'
 })

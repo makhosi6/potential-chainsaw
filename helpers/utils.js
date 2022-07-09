@@ -4,7 +4,7 @@
  * @returns {string}
  */
 function excludeJunkChars(input) {
-  let str = input;
+  let str = input ? input : "";
   let junk = [
     1,
     2,
@@ -22,19 +22,23 @@ function excludeJunkChars(input) {
     "show ▼",
     "▼",
     "▲",
-    // "\a",
-    // "\b",
-    // "\r",
-    // // // "\n",
-    // "\s",
-    // "\t",
+    // "/\a",
+    // "/\b",
+    // "/\r",
+    // "\n",
+    // `/\s`,
+    // "/\t",
     "±",
+    // " + ",
     "[",
     "]",
   ];
   let last = "";
   junk.map((j) => j !== last && (str = str.replace(j, "")));
-  return str.replace(/(&nbsp;)*/g, "");
+  //
+  let output = str.replace(/(&nbsp;)*/g, "");
+
+  return output.replace(/\s+/g, " ").trim();
 }
 /**
  * Separate text/defination from examples.
